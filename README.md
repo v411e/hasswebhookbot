@@ -1,7 +1,3 @@
-# hasswebhookbot
-A simple maubot to get Homeassistant-notifications in your favorite matrix room
-
-
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/v411e/hasswebhookbot)
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/v411e/hasswebhookbot/CI?label=maubot%20package%20build)
 
