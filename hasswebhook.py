@@ -1,7 +1,9 @@
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, web
-from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, EventID
+from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, EventID, EventType
 from mautrix.errors.request import MForbidden
+from mautrix.util import markdown
+from html import escape
 
 import json
 from typing import Type
@@ -28,20 +30,31 @@ class HassWebhook(Plugin):
     @command.new(name=get_command_prefix)
     async def baseurl(self, evt: MessageEvent) -> None:
         webhook_url = self.get_base_url() + "_matrix/maubot/plugin/" + self.id + "/push/" + evt.room_id
-        await evt.reply("Your Webhook-URL is:\n\n" +
-                            "```\n" + webhook_url +
-                            "\n```" +
-                            "\n\n" +
-                            "Write this in your `configuration.yaml` on HA:\n\n" +
-                            "```yaml\n" +
-                            "notify:\n  - name: HASS_MAUBOT\n    platform: rest" +
-                            "\n    resource: \"" + webhook_url + "\"\n    method: POST_JSON" +
-                            "\n```" +
-                            "\n\n" +
-                            "Use this yaml to send a notification from homeassistant:\n\n" +
-                            "```yaml\n" +
-                            "service: notify.hass_maubot\ndata:\n  message: Die Post ist da!  📬"+
-                            "\n```")
+        message_plain = ("Your Webhook-URL is: {webhook_url}".format(webhook_url = webhook_url))
+        message_md = (
+"""Your webhook-URL is:
+{webhook_url}\n
+
+Write this in your `configuration.yaml` on HA (don't forget to reload):
+```yaml
+notify:
+  - name: HASS_MAUBOT
+    platform: rest
+    resource: \"{webhook_url}\"
+    method: POST_JSON
+```
+\n\n
+Use this yaml to send a notification from homeassistant:
+```yaml
+service: notify.hass_maubot
+data:
+  message: Die Post ist da!  📬
+```
+""".format(webhook_url = webhook_url))
+        message_html = markdown.render(message_md, allow_html=True)
+        content = TextMessageEventContent(msgtype=MessageType.TEXT, format=Format.HTML,
+                                          body=message_plain, formatted_body=message_html)
+        await evt.respond(content)
 
 
     @web.post("/push/{room_id}")
