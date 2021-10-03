@@ -7,7 +7,7 @@ from html import escape
 
 import json
 from typing import Type
-from playground.hasswebhook.config import Config
+from playground.hasswebhookbot.config import Config
 from aiohttp.web import Request, Response
 
 
