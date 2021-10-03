@@ -30,7 +30,7 @@ jobs:
       - name: Create .mbp package
         run: |
           mkdir artifacts
-          zip -9r ./artifacts/$(grep 'id:' maubot.yaml | sed 's/id: //')'-v'$(grep 'version:' maubot.yaml | sed 's/version: //').mbp maubot.yaml mensabot.py LICENSE.txt
+          zip -9r ./artifacts/$(grep 'id:' maubot.yaml | sed 's/id: //')'-v'$(grep 'version:' maubot.yaml | sed 's/version: //').mbp maubot.yaml hasswebhook.py config.py base-config.yaml
           
       - name: Release and attach artifacts
         uses: fnkr/github-action-ghr@v1
