@@ -1,5 +1,6 @@
 .idea
 venv
+__pycache__
 
 # Maubot plugin
 *.mbp

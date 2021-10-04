@@ -30,6 +30,7 @@ class HassWebhook(Plugin):
     async def baseurl(self, evt: MessageEvent) -> None:
         webhook_url = self.get_base_url() + "_matrix/maubot/plugin/" + self.id + "/push/" + evt.room_id
         message_plain = ("Your Webhook-URL is: {webhook_url}".format(webhook_url = webhook_url))
+        jinja_data_template = "{'message': '{{data.message}}', 'active': '{{data.active}}', 'identifier': '{{data.identifier}}'}"
         message_md = (
 """Your webhook-URL is:
 {webhook_url}\n
@@ -41,6 +42,8 @@ notify:
     platform: rest
     resource: \"{webhook_url}\"
     method: POST_JSON
+    data_template:
+      message: "{data_template_jinja}"
 ```
 \n\n
 Use this yaml to send a notification from homeassistant:
@@ -63,7 +66,7 @@ data:
     active: False
     identifier: letterbox.status
 ```
-""".format(webhook_url = webhook_url))
+""".format(webhook_url = webhook_url, data_template_jinja=data_template_jinja))
         message_html = markdown.render(message_md, allow_html=True)
         content = TextMessageEventContent(msgtype=MessageType.TEXT, format=Format.HTML,
                                           body=message_plain, formatted_body=message_html)
