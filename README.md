@@ -9,7 +9,7 @@ A [maubot](https://github.com/maubot) bot to get [Homeassistant](https://github.
 - Create client and instance in Maubot Manager
 - Configure instance `base_url`
 - Invite your client into a room
-- Use `!ha` to get your own `WEBHOOK_URL` and a generated yaml snippet for the webhook setup in your homeassistant instance.
+- Use `!ha` to get the `WEBHOOK_URL` of your room and generate a YAML snippet for the configuration of your homeassistant instance.
 
 `configuration.yaml` on HA (don't forget to reload):
 ```yaml
@@ -41,3 +41,6 @@ data:
   data:
     active: False
     identifier: letterbox.status
+```
+
+The bot is stateless and can be used with multiple rooms.
