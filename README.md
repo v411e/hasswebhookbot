@@ -5,25 +5,26 @@
 A [maubot](https://github.com/maubot) bot to get [Homeassistant](https://github.com/home-assistant)-notifications in your favorite matrix room.
 
 ## Configuration
-- Load the *.mbp file of the current release into your Maubot Manager
-- Create client and instance in Maubot Manager
-- Configure instance `base_url`
-- Invite your client into a room
-- Use `!ha` to get the `WEBHOOK_URL` of your room and generate a YAML snippet for the configuration of your homeassistant instance.
+First add this plugin to your maubot manager:
+1. Load the *.mbp file of the current [release](https://github.com/v411e/hasswebhookbot/releases)
+2. Create client and instance
+3. Configure instance `base_url`
+
+After setting up the plugin just invite the bot into a room. Each room has an indvidual "webhook url". To get yours just write `!ha`. The bot replies with the `WEBHOOK_URL` of your room and also generates some YAML code for the configuration of your homeassistant instance (like below).
 
 `configuration.yaml` on HA (don't forget to reload):
 ```yaml
 notify:
   - name: HASS_MAUBOT
     platform: rest
-    resource: "<WEBHOOK_URL>"     # replace with your own
+    resource: "<WEBHOOK_URL>"
     method: POST_JSON
     data_template:
       message: "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}"
 ```
 
 ## Usage
-The bot is stateless and can be used with multiple rooms.
+The bot is stateless (no database) and can be used within multiple rooms.
 ```yaml
 service: notify.<your_service_name>
 data:
