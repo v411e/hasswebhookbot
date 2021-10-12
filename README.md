@@ -19,7 +19,7 @@ notify:
     resource: "<WEBHOOK_URL>"                       # replace with your own
     method: POST_JSON
     data_template:
-      message: "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}}"
+      message: "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}"
 ```
 
 Send a notification from homeassistant:
