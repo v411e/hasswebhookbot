@@ -16,10 +16,10 @@ A [maubot](https://github.com/maubot) bot to get [Homeassistant](https://github.
 notify:
   - name: HASS_MAUBOT
     platform: rest
-    resource: "<WEBHOOK_URL>"    # replace with your own
+    resource: "<WEBHOOK_URL>"                       # replace with your own
     method: POST_JSON
     data_template:
-      message: "{'message': '{{data.message}}', 'active': '{{data.active}}', 'identifier': '{{data.identifier}}'}"
+      message: "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}'}"
 ```
 
 Send a notification from homeassistant:
@@ -29,8 +29,8 @@ data:
   message: None
   data:
     message: Die Post ist da! 📬
-    active: True
-    identifier: letterbox.status
+    type: <message / reaction / edit>               # The type of action
+    identifier: <letterbox.status / eventID.xyz>    # Use your own identifier (#1) or reference an eventID (#2)
 ```
 
 Redact the last message with a given identifier:
@@ -39,7 +39,7 @@ service: notify.hass_maubot
 data:
   message: None
   data:
-    active: False
+    type: redaction
     identifier: letterbox.status
 ```
 
