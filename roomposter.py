@@ -30,16 +30,26 @@ class RoomPoster:
     room_id : str
     hasswebhook : Plugin
     identifier: str
+    callback_url: str
 
 
-    def __init__(self, hasswebhook: Plugin, message: str, identifier: str, rp_type: RoomPosterType, room_id: str):
+    def __init__(self, hasswebhook: Plugin, message: str, identifier: str, rp_type: RoomPosterType, room_id: str, callback_url=""):
         self.body = "{message} by {identifier}".format(message=message, identifier=identifier)
-        self.content = TextMessageEventContent(msgtype=MessageType.TEXT, format=Format.HTML,
-                                          body=self.body, formatted_body=message)
+        self.content = TextMessageEventContent(
+            msgtype=MessageType.TEXT,
+            format=Format.HTML,
+            body=self.body,
+            formatted_body=message
+            )
         self.rp_type = rp_type
         self.room_id = room_id
         self.hasswebhook = hasswebhook
         self.identifier = identifier
+        self.callback_url = callback_url
+
+
+    async def callback(self, event_id: str) -> bool:
+        await self.hasswebhook.http.post(self.callback_url, json={'event_id': event_id})
 
 
     async def post_to_room (self) -> bool:
@@ -51,32 +61,39 @@ class RoomPoster:
         return False
 
 
-    async def post_message(self):
+    async def post_message(self) -> bool:
         # send message to room
         try:
-            eventID: EventID = await self.hasswebhook.client.send_message(self.room_id, self.content)
-            self.hasswebhook.log.debug("EventID: " + eventID)
+            event_id_req = await self.hasswebhook.client.send_message(self.room_id, self.content)
+            await self.callback(event_id_req)
+            self.hasswebhook.log.debug("EventID: " + event_id_req)
         except MForbidden:
             self.hasswebhook.log.error("Wrong Room ID")
             return False
         return True
 
 
-    async def post_redaction(self):
+    async def post_redaction(self) -> bool:
         # redact last message with same identifier
         event_id = self.identifier[9:] if ("event_id." in self.identifier) else await self.search_history_for_event_id()
         try:
-            await self.hasswebhook.client.redact(room_id=self.room_id, event_id=event_id, reason="deactivated")
-        except Exception as e:
-            self.hasswebhook.log.error("Error posting redaction")
+            event_id_req = await self.hasswebhook.client.redact(
+                room_id=self.room_id,
+                event_id=event_id,
+                reason="deactivated"
+                )
+            await self.callback(event_id_req)
+        except MForbidden:
+            self.hasswebhook.log.error("Wrong Room ID")
+            return False
         return True
 
 
-    async def post_edit(self):
+    async def post_edit(self) -> bool:
         return True
 
 
-    async def post_reaction(self):
+    async def post_reaction(self) -> bool:
         return True
 
 

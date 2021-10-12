@@ -30,10 +30,22 @@ class HassWebhook(Plugin):
 
     @command.new(name=get_command_prefix)
     async def setup_instructions(self, evt: MessageEvent) -> None:
-        setup_instructions =HassWebhookSetupInstructions(base_url=self.get_base_url(), bot_id=self.id, room_id=evt.room_id)
-        message_html = markdown.render(setup_instructions.md(), allow_html=True)
-        content = TextMessageEventContent(msgtype=MessageType.TEXT, format=Format.HTML,
-                                          body=setup_instructions.plain(), formatted_body=message_html)
+        setup_instructions = HassWebhookSetupInstructions(
+            base_url=self.get_base_url(),
+            bot_id=self.id,
+            room_id=evt.room_id
+            )
+        message_html = markdown.render(
+            setup_instructions.md(),
+            allow_html=True
+            )
+        content = TextMessageEventContent(
+            msgtype=MessageType.TEXT,
+            format=Format.HTML,
+            body=setup_instructions.plain(),
+            formatted_body=message_html
+            )
+            
         await evt.respond(content)
 
 
@@ -46,7 +58,15 @@ class HassWebhook(Plugin):
         message: str = req_dict.get("message")
         rp_type: RoomPosterType = RoomPosterType.get_type_from_str(req_dict.get("type"))
         identifier: str = req_dict.get("identifier")
-        room_poster: RoomPoster = RoomPoster(self, message, identifier, rp_type, room_id)
+        callback_url: str = req_dict.get("callback_url", "")
+        room_poster: RoomPoster = RoomPoster(
+            hasswebhook=self,
+            message=message,
+            identifier=identifier,
+            rp_type=rp_type,
+            room_id=room_id,
+            callback_url=callback_url
+            )
 
         self.log.debug(f"Received data with ID {room_id}: {req_dict}")
         if (await room_poster.post_to_room()):

@@ -2,7 +2,7 @@ class HassWebhookSetupInstructions:
     webhook_url: str
     webhook_url_cli: str
     message_plain: str
-    jinja_data_template: str = "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}'}"
+    jinja_data_template: str = "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}"
     curl_data: str = "{\\\"message\\\": \\\"{\'message\': \'Foo bar\', \'type\': \'message\', \'identifier\': \'foo.bar\'}\\\"}"
     message_md: str
 
@@ -34,6 +34,7 @@ data:
     message: Die Post ist da! 📬
     type: message / reaction / redaction / edit
     identifier: letterbox.status / eventID.xyz
+    callback_url: https://<your homeassistant instance>/api/webhook/<some_hook_id>
 ```
 
 Use this to redact the last message with a given identifier:
