@@ -1,3 +1,4 @@
+# Generate a beautiful setup instruction with individual elements
 class HassWebhookSetupInstructions:
     webhook_url: str
     webhook_url_cli: str
@@ -5,6 +6,7 @@ class HassWebhookSetupInstructions:
     jinja_data_template: str = "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}"
     curl_data: str = "{\\\"message\\\": \\\"{\'message\': \'Foo bar\', \'type\': \'message\', \'identifier\': \'foo.bar\'}\\\"}"
     message_md: str
+
 
     def __init__(self, base_url: str, bot_id: str, room_id: str):
         self.webhook_url = base_url + "_matrix/maubot/plugin/" + bot_id + "/push/" + room_id
@@ -53,11 +55,16 @@ curl -d "{curl_data}" -X POST "{webhook_url_cli}"
 ```
 """.format(webhook_url = self.webhook_url, jinja_data_template=self.jinja_data_template, curl_data=self.curl_data, webhook_url_cli=self.webhook_url_cli))
 
+
     def __str__(self) -> str:
         return self.message_md
 
-    def md(self) -> str:
-        return self.message_md
 
+    # Plain only contains the webhook-url of that specific room
     def plain(self) -> str:
         return self.message_plain
+
+
+    # Markdown-formatted message also contains setup instructions
+    def md(self) -> str:
+        return self.message_md
