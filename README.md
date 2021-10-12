@@ -30,7 +30,7 @@ data:
   data:
     message: Die Post ist da! 📬
     type: <message / reaction / edit>               # The type of action
-    identifier: <letterbox.status / eventID.xyz>    # Use your own identifier (#1) or reference an eventID (#2)
+    identifier: <letterbox.status / event_id.xyz>    # Use your own identifier (#1) or reference an event_id (#2)
 ```
 
 Redact the last message with a given identifier:

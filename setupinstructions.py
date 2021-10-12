@@ -1,5 +1,3 @@
-
-
 class HassWebhookSetupInstructions:
     webhook_url: str
     webhook_url_cli: str

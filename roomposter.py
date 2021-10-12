@@ -41,6 +41,7 @@ class RoomPoster:
         self.hasswebhook = hasswebhook
         self.identifier = identifier
 
+
     async def post_to_room (self) -> bool:
         if (self.rp_type == RoomPosterType.MESSAGE):
             return await self.post_message()
@@ -63,6 +64,23 @@ class RoomPoster:
 
     async def post_redaction(self):
         # redact last message with same identifier
+        event_id = self.identifier[9:] if ("event_id." in self.identifier) else await self.search_history_for_event_id()
+        try:
+            await self.hasswebhook.client.redact(room_id=self.room_id, event_id=event_id, reason="deactivated")
+        except Exception as e:
+            self.hasswebhook.log.error("Error posting redaction")
+        return True
+
+
+    async def post_edit(self):
+        return True
+
+
+    async def post_reaction(self):
+        return True
+
+
+    async def search_history_for_event_id(self) -> str:
         sync_result = await self.hasswebhook.client.sync()
         prev_batch = sync_result.get("rooms").get("join").get(self.room_id).get("timeline").get("prev_batch")
         encrypted_eventlist = []
@@ -98,19 +116,7 @@ class RoomPoster:
         event_id = ""
         for event in eventlist:
             evt_content: MessageEventContent = event.content
-            if self.content.body in evt_content.body:
+            if self.identifier in evt_content.body:
                 event_id = event.event_id
-                try:
-                    await self.hasswebhook.client.redact(room_id=self.room_id, event_id=event_id, reason="deactivated")
-                except Exception as e:
-                    self.log.error(traceback.format_exc())
                 break
-        return True
-
-
-    async def post_edit():
-        return True
-
-
-    async def post_reaction():
-        return True
+        return event_id
