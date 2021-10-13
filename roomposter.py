@@ -3,7 +3,7 @@ from maubot.matrix import MaubotMessageEvent
 from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, EventID, EventType, Event, EncryptedEvent, PaginationDirection
 from mautrix.errors.request import MForbidden
 from enum import Enum
-
+import re
 from typing import Type
 
 
@@ -25,8 +25,6 @@ class RoomPosterType(Enum):
 
 
 class RoomPoster:
-    body: str
-    content: TextMessageEventContent
     rp_type: RoomPosterType
     room_id : str
     hasswebhook : Plugin
@@ -35,13 +33,6 @@ class RoomPoster:
     message: str
 
     def __init__(self, hasswebhook: Plugin, message: str, identifier: str, rp_type: RoomPosterType, room_id: str, callback_url=""):
-        self.body = "{message} by {identifier}".format(message=message, identifier=identifier)
-        self.content = TextMessageEventContent(
-            msgtype=MessageType.TEXT,
-            format=Format.HTML,
-            body=self.body,
-            formatted_body=message
-            )
         self.rp_type = rp_type
         self.room_id = room_id
         self.hasswebhook = hasswebhook
@@ -52,7 +43,8 @@ class RoomPoster:
 
     # Send a POST as a callback containing the event_id of the sent message
     async def callback(self, event_id: str) -> bool:
-        await self.hasswebhook.http.post(self.callback_url, json={'event_id': event_id})
+        if self.callback_url:
+            await self.hasswebhook.http.post(self.callback_url, json={'event_id': event_id})
 
 
     # Switch for each RoomPosterType
@@ -70,8 +62,15 @@ class RoomPoster:
 
     # Send message to room
     async def post_message(self) -> bool:
+        body = "{message} by {identifier}".format(message=self.message, identifier=self.identifier) if self.identifier else self.message
+        content = TextMessageEventContent(
+            msgtype=MessageType.TEXT,
+            format=Format.HTML,
+            body=body,
+            formatted_body=self.message
+            )
         try:
-            event_id_req = await self.hasswebhook.client.send_message(self.room_id, self.content)
+            event_id_req = await self.hasswebhook.client.send_message(self.room_id, content)
             await self.callback(event_id_req)
             self.hasswebhook.log.debug("EventID: " + event_id_req)
         except MForbidden:
@@ -98,8 +97,15 @@ class RoomPoster:
 
     # Edit message
     async def post_edit(self) -> bool:
+        body = re.sub(r"<del>.*<\/del>", "", self.message)
+        content = TextMessageEventContent(
+            msgtype=MessageType.TEXT,
+            format=Format.HTML,
+            body=body,
+            formatted_body=self.message
+            )
         event: MaubotMessageEvent = await self.search_history_for_event()
-        await event.edit(content=self.content)
+        await event.edit(content=content)
         return True
 
 
