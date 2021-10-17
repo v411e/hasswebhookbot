@@ -3,6 +3,11 @@
 
 # Homeassistant notification bot for [matrix](https://matrix.org/) via webhooks
 A [maubot](https://github.com/maubot) bot to get [Homeassistant](https://github.com/home-assistant)-notifications in your favorite matrix room.
+Simple message                         |  Edited message with reaction
+:-------------------------------------:|:-------------------------:
+![Imgur](https://imgur.com/Y0pHiI5.jpg)|  ![Imgur](https://imgur.com/IMkIc1s.jpg)
+
+
 
 ## Configuration
 First add this plugin to your maubot manager:
