@@ -52,9 +52,9 @@ class HassWebhook(Plugin):
     @web.post("/push/{room_id}")
     async def post_data(self, req: Request) -> Response:
         room_id: str = req.match_info["room_id"]
+        self.log.info(await req.text())
         req_dict = await req.json()
         self.log.debug(req_dict)
-        req_dict = ast.literal_eval(req_dict.get("message"))
         message: str = req_dict.get("message")
         rp_type: RoomPosterType = RoomPosterType.get_type_from_str(req_dict.get("type"))
         identifier: str = req_dict.get("identifier")

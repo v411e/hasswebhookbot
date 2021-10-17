@@ -19,8 +19,10 @@ notify:
     platform: rest
     resource: "<WEBHOOK_URL>"
     method: POST_JSON
-    data_template:
-      message: "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}"
+    data:
+      type: "{{data.type}}"
+      identifier: "{{data.identifier}}"
+      callback_url: "{{data.callback_url}}"
 ```
 
 ## Usage
@@ -28,9 +30,8 @@ The bot is stateless (no database) and can be used within multiple rooms.
 ```yaml
 service: notify.<your_service_name>
 data:
-  message: None
+  message: <your_message>
   data:
-    message: <your_message>
     type: <message / reaction / edit / redaction>         # The type of action
     identifier: <letterbox.status / event_id.$DRTYGw...>  # Use your own identifier (#1) or reference an event_id (#2)
     callback_url: https://<your homeassistant instance>/api/webhook/<some_hook_id>  # Optional: Get a callback with entity_id of sent message
@@ -41,9 +42,8 @@ data:
 ```yaml
 service: notify.hass_maubot
 data:
-  message: None
+  message: Die Post ist da! 📬
   data:
-    message: Die Post ist da! 📬
     type: message
     identifier: letterbox.status
     callback_url: https://ha.example.com/api/webhook/some_hook_id
@@ -70,9 +70,8 @@ data:
 ```yaml
 service: notify.hass_maubot
 data:
-  message: None
+  message: 📬
   data:
-    message: 📬
     type: reaction
     identifier: letterbox.status
 ```
@@ -80,9 +79,8 @@ or
 ```yaml
 service: notify.hass_maubot
 data:
-  message: None
+  message: 📬
   data:
-    message: 📬
     type: reaction
     identifier: event_id.$DRTYGw...     # event_id can be obtained through callback
 ```
@@ -90,9 +88,8 @@ data:
 ```yaml
 service: notify.hass_maubot
 data:
-  message: None
+  message: <del>Die Post ist da! 📬</del>
   data:
-    message: <del>Die Post ist da! 📬</del>
     type: edit
     identifier: letterbox.status
 ```
@@ -100,9 +97,8 @@ or
 ```yaml
 service: notify.hass_maubot
 data:
-  message: None
+  message: <del>Die Post ist da! 📬</del>
   data:
-    message: <del>Die Post ist da! 📬</del>
     type: edit
     identifier: event_id.$DRTYGw...     # event_id can be obtained through callback
 ```

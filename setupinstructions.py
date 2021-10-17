@@ -3,8 +3,7 @@ class HassWebhookSetupInstructions:
     webhook_url: str
     webhook_url_cli: str
     message_plain: str
-    jinja_data_template: str = "{'message': '{{data.message}}', 'type': '{{data.type}}', 'identifier': '{{data.identifier}}', 'callback_url': '{{data.callback_url}}'}"
-    curl_data: str = "{\\\"message\\\": \\\"{\'message\': \'Foo bar\', \'type\': \'message\', \'identifier\': \'foo.bar\'}\\\"}"
+    curl_data: str = "{\\\"message\\\": \\\"Foo bar\\\", \\\"type\\\": \\\"message\\\", \\\"identifier\\\": \\\"foo.bar\\\"}"
     message_md: str
 
 
@@ -23,17 +22,18 @@ notify:
     platform: rest
     resource: \"{webhook_url}\"
     method: POST_JSON
-    data_template:
-      message: "{jinja_data_template}"
+    data:
+      type: \"{data_type}\"
+      identifier: \"{data_identifier}\"
+      callback_url: \"{data_callback_url}\"
 ```
 \n\n
 Use this yaml to send a notification from homeassistant:
 ```yaml
 service: notify.hass_maubot
 data:
-  message: None
+  message: Die Post ist da! 📬
   data:
-    message: Die Post ist da! 📬
     type: message / reaction / redaction / edit
     identifier: letterbox.status / eventID.xyz
     callback_url: https://<your homeassistant instance>/api/webhook/<some_hook_id>
@@ -53,7 +53,13 @@ Use this to test the webhook via cli:
 ```zsh
 curl -d "{curl_data}" -X POST "{webhook_url_cli}"
 ```
-""".format(webhook_url = self.webhook_url, jinja_data_template=self.jinja_data_template, curl_data=self.curl_data, webhook_url_cli=self.webhook_url_cli))
+""".format(
+      webhook_url = self.webhook_url,
+      curl_data=self.curl_data,
+      webhook_url_cli=self.webhook_url_cli,
+      data_type="{{data.type}}",
+      data_identifier="{{data.identifier}}",
+      data_callback_url="{{data.callback_url}}"))
 
 
     def __str__(self) -> str:
