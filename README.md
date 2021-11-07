@@ -15,7 +15,7 @@ First add this plugin to your maubot manager:
 2. Create client and instance
 3. Configure instance `base_url`
 
-After setting up the plugin just invite the bot into a room. Each room has an indvidual "webhook url". To get yours just write `!ha`. The bot replies with the `WEBHOOK_URL` of your room and also generates some YAML code for the configuration of your homeassistant instance (like below).
+After setting up the plugin just invite the bot into an *encrypted* room (→ [How to enable encrypted rooms for your maubot](https://md.riess.dev/maubot)). Each room has an indvidual "webhook url". To get yours just write `!ha`. The bot replies with the `WEBHOOK_URL` of your room and also generates some YAML code for the configuration of your homeassistant instance (like below).
 
 `configuration.yaml` on HA (don't forget to reload):
 ```yaml
