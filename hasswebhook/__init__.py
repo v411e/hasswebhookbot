@@ -56,8 +56,8 @@ class HassWebhook(Plugin):
         req_dict = await req.json()
         self.log.debug(req_dict)
         message: str = req_dict.get("message")
-        rp_type: RoomPosterType = RoomPosterType.get_type_from_str(req_dict.get("type"))
-        identifier: str = req_dict.get("identifier")
+        rp_type: RoomPosterType = RoomPosterType.get_type_from_str(req_dict.get("type", "message"))
+        identifier: str = req_dict.get("identifier", "")
         callback_url: str = req_dict.get("callback_url", "")
         room_poster: RoomPoster = RoomPoster(
             hasswebhook=self,

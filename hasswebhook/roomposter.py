@@ -16,6 +16,7 @@ class RoomPosterType(Enum):
 
     def get_type_from_str(mtype: str) -> Enum:
         typeSwitcher = {
+            "": RoomPosterType.MESSAGE,
             "message": RoomPosterType.MESSAGE,
             "redaction": RoomPosterType.REDACTION,
             "edit": RoomPosterType.EDIT,
