@@ -7,10 +7,10 @@ from enum import Enum
 
 import json, ast
 from typing import Type
-from playground.hasswebhookbot.config import Config
+from .config import Config
 from aiohttp.web import Request, Response
-from playground.hasswebhookbot.roomposter import RoomPoster, RoomPosterType
-from playground.hasswebhookbot.setupinstructions import HassWebhookSetupInstructions
+from .roomposter import RoomPoster, RoomPosterType
+from .setupinstructions import HassWebhookSetupInstructions
 
 class HassWebhook(Plugin):
     config: Config
