@@ -1,6 +1,6 @@
 maubot: 0.1.0
 id: com.valentinriess.hasswebhook
-version: 0.0.9
+version: 0.0.8
 license: MIT
 modules:
   - hasswebhook
