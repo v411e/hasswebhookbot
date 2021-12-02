@@ -6,13 +6,14 @@ class HassWebhookSetupInstructions:
     curl_data: str = "{\\\"message\\\": \\\"Foo bar\\\", \\\"type\\\": \\\"message\\\", \\\"identifier\\\": \\\"foo.bar\\\"}"
     message_md: str
 
-
     def __init__(self, base_url: str, bot_id: str, room_id: str):
         self.webhook_url = base_url + "_matrix/maubot/plugin/" + bot_id + "/push/" + room_id
-        self.webhook_url_cli = base_url + "_matrix/maubot/plugin/" + bot_id + "/push/\\" + room_id
-        self.message_plain = ("Your Webhook-URL is: {webhook_url}".format(webhook_url = self.webhook_url))
+        self.webhook_url_cli = base_url + \
+            "_matrix/maubot/plugin/" + bot_id + "/push/\\" + room_id
+        self.message_plain = (
+            "Your Webhook-URL is: {webhook_url}".format(webhook_url=self.webhook_url))
         self.message_md = (
-"""Your webhook-URL is:
+            """Your webhook-URL is:
 {webhook_url}\n
 
 Write this in your `configuration.yaml` on HA (don't forget to reload):
@@ -54,23 +55,22 @@ Use this to test the webhook via cli:
 curl -d "{curl_data}" -X POST "{webhook_url_cli}"
 ```
 """.format(
-      webhook_url = self.webhook_url,
-      curl_data=self.curl_data,
-      webhook_url_cli=self.webhook_url_cli,
-      data_type="{{data.type}}",
-      data_identifier="{{data.identifier}}",
-      data_callback_url="{{data.callback_url}}"))
-
+                webhook_url=self.webhook_url,
+                curl_data=self.curl_data,
+                webhook_url_cli=self.webhook_url_cli,
+                data_type="{{data.type}}",
+                data_identifier="{{data.identifier}}",
+                data_callback_url="{{data.callback_url}}"))
 
     def __str__(self) -> str:
         return self.message_md
 
-
     # Plain only contains the webhook-url of that specific room
+
     def plain(self) -> str:
         return self.message_plain
 
-
     # Markdown-formatted message also contains setup instructions
+
     def md(self) -> str:
         return self.message_md
