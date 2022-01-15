@@ -3,6 +3,7 @@ from maubot.matrix import MaubotMessageEvent
 from mautrix.types import TextMessageEventContent, Format, MessageType, PaginationDirection
 from mautrix.errors.request import MForbidden
 from enum import Enum
+from markdown import markdown
 import re
 
 
@@ -67,7 +68,7 @@ class RoomPoster:
             msgtype=MessageType.TEXT,
             format=Format.HTML,
             body=body,
-            formatted_body=self.message
+            formatted_body=markdown(self.message)
         )
         try:
             event_id_req = await self.hasswebhook.client.send_message(self.room_id, content)
@@ -102,7 +103,7 @@ class RoomPoster:
             msgtype=MessageType.TEXT,
             format=Format.HTML,
             body=body,
-            formatted_body=self.message
+            formatted_body=markdown(self.message)
         )
         event: MaubotMessageEvent = await self.search_history_for_event()
         await event.edit(content=content)
