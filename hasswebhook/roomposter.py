@@ -1,10 +1,9 @@
 from maubot import Plugin
 from maubot.matrix import MaubotMessageEvent
-from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, EventID, EventType, Event, EncryptedEvent, PaginationDirection
+from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, MessageEventContent
 from mautrix.errors.request import MForbidden
 from enum import Enum
 import re
-from typing import Type
 
 
 class RoomPosterType(Enum):
@@ -13,63 +12,61 @@ class RoomPosterType(Enum):
     REDACTION = 3
     REACTION = 4
 
-
     def get_type_from_str(mtype: str) -> Enum:
-        typeSwitcher = {
+        type_switcher = {
             "": RoomPosterType.MESSAGE,
             "message": RoomPosterType.MESSAGE,
             "redaction": RoomPosterType.REDACTION,
             "edit": RoomPosterType.EDIT,
             "reaction": RoomPosterType.REACTION
         }
-        return typeSwitcher.get(mtype)
+        return type_switcher.get(mtype)
 
 
 class RoomPoster:
     rp_type: RoomPosterType
-    room_id : str
-    hasswebhook : Plugin
+    room_id: RoomID
+    hasswebhook: Plugin
     identifier: str
     callback_url: str
     message: str
 
-    def __init__(self, hasswebhook: Plugin, message: str, identifier: str, rp_type: RoomPosterType, room_id: str, callback_url=""):
+    def __init__(self, hasswebhook: Plugin, message: str, identifier: str, rp_type: RoomPosterType, room_id: str,
+                 callback_url=""):
         self.rp_type = rp_type
-        self.room_id = room_id
+        self.room_id = RoomID(room_id)
         self.hasswebhook = hasswebhook
         self.identifier = identifier
         self.callback_url = callback_url
         self.message = message
 
-
     # Send a POST as a callback containing the event_id of the sent message
-    async def callback(self, event_id: str) -> bool:
+    async def callback(self, event_id: str) -> None:
         if self.callback_url:
             await self.hasswebhook.http.post(self.callback_url, json={'event_id': event_id})
 
-
     # Switch for each RoomPosterType
-    async def post_to_room (self) -> bool:
-        if (self.rp_type == RoomPosterType.MESSAGE):
+    async def post_to_room(self) -> bool:
+        if self.rp_type == RoomPosterType.MESSAGE:
             return await self.post_message()
-        if (self.rp_type == RoomPosterType.REDACTION):
+        if self.rp_type == RoomPosterType.REDACTION:
             return await self.post_redaction()
-        if (self.rp_type == RoomPosterType.EDIT):
+        if self.rp_type == RoomPosterType.EDIT:
             return await self.post_edit()
-        if (self.rp_type == RoomPosterType.REACTION):
+        if self.rp_type == RoomPosterType.REACTION:
             return await self.post_reaction()
         return False
 
-
     # Send message to room
     async def post_message(self) -> bool:
-        body = "{message} by {identifier}".format(message=self.message, identifier=self.identifier) if self.identifier else self.message
+        body = "{message} by {identifier}".format(message=self.message,
+                                                  identifier=self.identifier) if self.identifier else self.message
         content = TextMessageEventContent(
             msgtype=MessageType.TEXT,
             format=Format.HTML,
             body=body,
             formatted_body=self.message
-            )
+        )
         try:
             event_id_req = await self.hasswebhook.client.send_message(self.room_id, content)
             await self.callback(event_id_req)
@@ -79,22 +76,21 @@ class RoomPoster:
             return False
         return True
 
-    
     # Redact message
     async def post_redaction(self) -> bool:
-        event_id = self.identifier[9:] if ("event_id." in self.identifier) else (await self.search_history_for_event()).event_id
+        event_id = self.identifier[9:] if ("event_id." in self.identifier) else (
+            await self.search_history_for_event()).event_id
         try:
             event_id_req = await self.hasswebhook.client.redact(
                 room_id=self.room_id,
                 event_id=event_id,
                 reason="deactivated"
-                )
+            )
             await self.callback(event_id_req)
         except MForbidden:
             self.hasswebhook.log.error("Wrong Room ID")
             return False
         return True
-
 
     # Edit message
     async def post_edit(self) -> bool:
@@ -104,18 +100,16 @@ class RoomPoster:
             format=Format.HTML,
             body=body,
             formatted_body=self.message
-            )
+        )
         event: MaubotMessageEvent = await self.search_history_for_event()
         await event.edit(content=content)
         return True
-
 
     # React on message
     async def post_reaction(self) -> bool:
         event: MaubotMessageEvent = await self.search_history_for_event()
         await event.react(key=self.message)
         return True
-
 
     # Search in room history for a message containing the identifier and return the event of that message
     async def search_history_for_event(self) -> MaubotMessageEvent:
@@ -127,7 +121,7 @@ class RoomPoster:
             direction=PaginationDirection.FORWARD,
             from_token=prev_batch,
             limit=100
-            )
+        )
         encrypted_eventlist.extend(get_messages_result_FW.events)
         encrypted_eventlist = list(reversed(encrypted_eventlist))
 
@@ -138,7 +132,7 @@ class RoomPoster:
                 direction=PaginationDirection.BACKWARD,
                 from_token=start,
                 limit=100
-                )
+            )
             encrypted_eventlist.extend(get_messages_result_BW.events)
             start = get_messages_result_BW.end
 
@@ -146,13 +140,13 @@ class RoomPoster:
         for encrypted_event in encrypted_eventlist:
             try:
                 event = await self.hasswebhook.client.crypto.decrypt_megolm_event(encrypted_event)
-                if (event.sender == self.hasswebhook.client.mxid):
+                if event.sender == self.hasswebhook.client.mxid:
                     eventlist.append(event)
             except:
                 continue
-            
-        message_event: MaubotMessageEvent
-        if ("event_id." in self.identifier):
+
+        message_event: MaubotMessageEvent = None
+        if "event_id." in self.identifier:
             event_id = self.identifier[9:]
             for event in eventlist:
                 if event_id == event.event_id:
@@ -166,5 +160,5 @@ class RoomPoster:
                     break
         if not message_event:
             self.hasswebhook.log.error("Could not find a matching event.")
-            return
+            return message_event
         return message_event
