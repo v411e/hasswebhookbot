@@ -63,7 +63,7 @@ class HassWebhook(Plugin):
         )
 
         self.log.debug(f"Received data with ID {room_id}: {req_dict}")
-        if (await room_poster.post_to_room()):
+        if await room_poster.post_to_room():
             return Response(status=200)
         else:
             self.log.debug("I responded with 404")
