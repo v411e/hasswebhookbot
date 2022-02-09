@@ -3,6 +3,7 @@ from maubot.matrix import MaubotMessageEvent
 from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, MessageEventContent
 from mautrix.errors.request import MForbidden
 from enum import Enum
+from markdown import markdown
 import re
 
 
@@ -58,14 +59,15 @@ class RoomPoster:
         return False
 
     # Send message to room
+
     async def post_message(self) -> bool:
-        body = "{message} by {identifier}".format(message=self.message,
-                                                  identifier=self.identifier) if self.identifier else self.message
+        body = "{message} by {identifier}".format(
+            message=self.message, identifier=self.identifier) if self.identifier else self.message
         content = TextMessageEventContent(
             msgtype=MessageType.TEXT,
             format=Format.HTML,
             body=body,
-            formatted_body=self.message
+            formatted_body=markdown(self.message)
         )
         try:
             event_id_req = await self.hasswebhook.client.send_message(self.room_id, content)
@@ -77,6 +79,7 @@ class RoomPoster:
         return True
 
     # Redact message
+
     async def post_redaction(self) -> bool:
         event_id = self.identifier[9:] if ("event_id." in self.identifier) else (
             await self.search_history_for_event()).event_id
@@ -93,28 +96,32 @@ class RoomPoster:
         return True
 
     # Edit message
+
     async def post_edit(self) -> bool:
         body = re.sub(r"<del>.*<\/del>", "", self.message)
         content = TextMessageEventContent(
             msgtype=MessageType.TEXT,
             format=Format.HTML,
             body=body,
-            formatted_body=self.message
+            formatted_body=markdown(self.message)
         )
         event: MaubotMessageEvent = await self.search_history_for_event()
         await event.edit(content=content)
         return True
 
     # React on message
+
     async def post_reaction(self) -> bool:
         event: MaubotMessageEvent = await self.search_history_for_event()
         await event.react(key=self.message)
         return True
 
     # Search in room history for a message containing the identifier and return the event of that message
+
     async def search_history_for_event(self) -> MaubotMessageEvent:
         sync_result = await self.hasswebhook.client.sync()
-        prev_batch = sync_result.get("rooms").get("join").get(self.room_id).get("timeline").get("prev_batch")
+        prev_batch = sync_result.get("rooms").get("join").get(
+            self.room_id).get("timeline").get("prev_batch")
         encrypted_eventlist = []
         get_messages_result_FW = await self.hasswebhook.client.get_messages(
             room_id=self.room_id,
@@ -150,13 +157,15 @@ class RoomPoster:
             event_id = self.identifier[9:]
             for event in eventlist:
                 if event_id == event.event_id:
-                    message_event = MaubotMessageEvent(base=event, client=self.hasswebhook.client)
+                    message_event = MaubotMessageEvent(
+                        base=event, client=self.hasswebhook.client)
                     break
         else:
             for event in eventlist:
                 evt_content: MessageEventContent = event.content
                 if self.identifier in evt_content.body:
-                    message_event = MaubotMessageEvent(base=event, client=self.hasswebhook.client)
+                    message_event = MaubotMessageEvent(
+                        base=event, client=self.hasswebhook.client)
                     break
         if not message_event:
             self.hasswebhook.log.error("Could not find a matching event.")
