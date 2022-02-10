@@ -5,7 +5,7 @@
 A [maubot](https://github.com/maubot) bot to get [Homeassistant](https://github.com/home-assistant)-notifications in your favorite matrix room.
 Simple message                         |  Edited message with reaction
 :-------------------------------------:|:-------------------------:
-![Imgur](https://imgur.com/Y0pHiI5.jpg)|  ![Imgur](https://imgur.com/IMkIc1s.jpg)
+![Imgur](https://i.imgur.com/y22FQKe.jpg)|  ![Imgur](https://i.imgur.com/rPUdca3.jpeg)
 
 
 
@@ -28,6 +28,7 @@ notify:
       type: "{{data.type}}"
       identifier: "{{data.identifier}}"
       callback_url: "{{data.callback_url}}"
+      lifetime: "{{data.lifetime}}"
 ```
 
 ## Usage
@@ -40,6 +41,7 @@ data:
     type: <message / reaction / edit / redaction>         # The type of action
     identifier: <letterbox.status / event_id.$DRTYGw...>  # Use your own identifier (#1) or reference an event_id (#2)
     callback_url: https://<your homeassistant instance>/api/webhook/<some_hook_id>  # Optional: Get a callback with entity_id of sent message
+    lifetime: 1440    # Optional: Activate message self-deletion after given time in minutes
 ```
 
 ## Examples
@@ -52,6 +54,7 @@ data:
     type: message
     identifier: letterbox.status
     callback_url: https://ha.example.com/api/webhook/some_hook_id
+    lifetime: 1440
 ```
 ### Delete a message
 ```yaml

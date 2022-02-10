@@ -27,6 +27,8 @@ notify:
       type: \"{data_type}\"
       identifier: \"{data_identifier}\"
       callback_url: \"{data_callback_url}\"
+      lifetime: \"{data_lifetime}\"
+
 ```
 \n\n
 Use this yaml to send a notification from homeassistant:
@@ -38,6 +40,7 @@ data:
     type: message / reaction / redaction / edit
     identifier: letterbox.status / eventID.xyz
     callback_url: https://<your homeassistant instance>/api/webhook/<some_hook_id>
+    lifetime: 1440
 ```
 
 Use this to redact the last message with a given identifier:
@@ -60,7 +63,8 @@ curl -d "{curl_data}" -X POST "{webhook_url_cli}"
                 webhook_url_cli=self.webhook_url_cli,
                 data_type="{{data.type}}",
                 data_identifier="{{data.identifier}}",
-                data_callback_url="{{data.callback_url}}"))
+                data_callback_url="{{data.callback_url}}",
+                data_lifetime="{{data.lifetime}}"))
 
     def __str__(self) -> str:
         return self.message_md
