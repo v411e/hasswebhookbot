@@ -32,7 +32,7 @@ notify:
 ```
 
 ## Usage
-The bot is stateless (no database) and can be used within multiple rooms.
+The bot is almost stateless (database only used for lifetime) and can be used within multiple rooms.
 ```yaml
 service: notify.<your_service_name>
 data:
