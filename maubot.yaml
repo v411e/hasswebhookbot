@@ -8,5 +8,5 @@ main_class: HassWebhook
 config: true
 extra_files:
 - base-config.yaml
-# database: true
+database: true
 webapp: true

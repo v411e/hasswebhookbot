@@ -1,10 +1,16 @@
+import re
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Optional
+
+import pytz
+from markdown import markdown
 from maubot import Plugin
 from maubot.matrix import MaubotMessageEvent
-from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, MessageEventContent
 from mautrix.errors.request import MForbidden
-from enum import Enum
-from markdown import markdown
-import re
+from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, MessageEventContent
+
+from .db import LifetimeEnd
 
 
 class RoomPosterType(Enum):
@@ -31,15 +37,17 @@ class RoomPoster:
     identifier: str
     callback_url: str
     message: str
+    lifetime: int
 
-    def __init__(self, hasswebhook: Plugin, message: str, identifier: str, rp_type: RoomPosterType, room_id: str,
-                 callback_url=""):
+    def __init__(self, hasswebhook: Plugin, identifier: str, rp_type: RoomPosterType, room_id: str,
+                 message="", callback_url="", lifetime=-1):
         self.rp_type = rp_type
         self.room_id = RoomID(room_id)
         self.hasswebhook = hasswebhook
         self.identifier = identifier
         self.callback_url = callback_url
         self.message = message
+        self.lifetime = lifetime
 
     # Send a POST as a callback containing the event_id of the sent message
     async def callback(self, event_id: str) -> None:
@@ -59,7 +67,6 @@ class RoomPoster:
         return False
 
     # Send message to room
-
     async def post_message(self) -> bool:
         body = "{message} by {identifier}".format(
             message=self.message, identifier=self.identifier) if self.identifier else self.message
@@ -72,14 +79,17 @@ class RoomPoster:
         try:
             event_id_req = await self.hasswebhook.client.send_message(self.room_id, content)
             await self.callback(event_id_req)
-            self.hasswebhook.log.debug("EventID: " + event_id_req)
+            # Lifetime (self-deletion)
+            if self.lifetime != -1:
+                end_time = datetime.now(tz=pytz.UTC) + timedelta(minutes=self.lifetime)
+                self.hasswebhook.db.insert(
+                    LifetimeEnd(end_date=end_time, room_id=self.room_id, event_id=event_id_req))
         except MForbidden:
             self.hasswebhook.log.error("Wrong Room ID")
             return False
         return True
 
     # Redact message
-
     async def post_redaction(self) -> bool:
         event_id = self.identifier[9:] if ("event_id." in self.identifier) else (
             await self.search_history_for_event()).event_id
@@ -96,9 +106,8 @@ class RoomPoster:
         return True
 
     # Edit message
-
     async def post_edit(self) -> bool:
-        body = re.sub(r"<del>.*<\/del>", "", self.message)
+        body = re.sub(r"<del>.*</del>", "", self.message)
         content = TextMessageEventContent(
             msgtype=MessageType.TEXT,
             format=Format.HTML,
@@ -110,15 +119,13 @@ class RoomPoster:
         return True
 
     # React on message
-
     async def post_reaction(self) -> bool:
         event: MaubotMessageEvent = await self.search_history_for_event()
         await event.react(key=self.message)
         return True
 
     # Search in room history for a message containing the identifier and return the event of that message
-
-    async def search_history_for_event(self) -> MaubotMessageEvent:
+    async def search_history_for_event(self) -> Optional[MaubotMessageEvent]:
         sync_result = await self.hasswebhook.client.sync()
         prev_batch = sync_result.get("rooms").get("join").get(
             self.room_id).get("timeline").get("prev_batch")
