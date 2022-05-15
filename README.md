@@ -110,3 +110,15 @@ data:
     type: edit
     identifier: event_id.$DRTYGw...     # event_id can be obtained through callback
 ```
+
+**Hint:** Depending on your preference, you can choose between two different modes for the edit feature:
+1. Content of `<del></del>` is discarded in the Matrix notification (`keep_del_tag: true`) <br> Notification example:
+```
+* - New message
+```
+2. Content of `<del></del>` is displayed as normal text (`keep_del_tag: false`) <br> Notification example: 
+```
+* Previous message - New message
+```
+
+You can change this setting on the maubot configuration page.

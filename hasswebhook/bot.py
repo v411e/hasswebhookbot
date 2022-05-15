@@ -1,5 +1,4 @@
 import asyncio
-import time
 
 import pytz
 from maubot import Plugin, MessageEvent
@@ -61,6 +60,9 @@ class HassWebhook(Plugin):
 
     def get_command_prefix(self) -> str:
         return self.config["command_prefix"]
+
+    def get_keep_del_tag(self) -> str:
+        return self.config["keep_del_tag"]
 
     @command.new(name=get_command_prefix)
     async def setup_instructions(self, evt: MessageEvent) -> None:
