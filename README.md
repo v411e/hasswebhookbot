@@ -25,10 +25,10 @@ notify:
     resource: "<WEBHOOK_URL>"
     method: POST_JSON
     data:
-      type: "{{data.type}}"
-      identifier: "{{data.identifier}}"
-      callback_url: "{{data.callback_url}}"
-      lifetime: "{{data.lifetime}}"
+      type: "{% if data is mapping and 'type' in data %}{{data.type}}{% endif %}"
+      identifier: "{% if data is mapping and 'identifier' in data %}{{data.identifier}}{% endif %}"
+      callback_url: "{% if data is mapping and 'callback_url' in data %}{{data.callback_url}}{% endif %}"
+      lifetime: "{% if data is mapping and 'lifetime' in data %}{{data.lifetime}}{% endif %}"
 ```
 
 ## Usage
