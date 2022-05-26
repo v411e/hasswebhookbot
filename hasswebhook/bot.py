@@ -117,6 +117,10 @@ class HassWebhook(Plugin):
             self.log.debug("I responded with 404")
             return Response(status=404)
 
+    @web.get("/health")
+    async def health(self, req: Request) -> Response:
+        return Response(status=200)
+
     @classmethod
     def get_config_class(cls) -> Type[Config]:
         return Config
