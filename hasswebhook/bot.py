@@ -19,11 +19,15 @@ from datetime import datetime, timedelta
 class HassWebhook(Plugin):
     config: Config
     db: LifetimeDatabase
+    loop_task: asyncio.Future
 
     async def start(self) -> None:
         self.config.load_and_update()
         self.db = LifetimeDatabase(self.database)
-        self.reminder_loop_task = asyncio.ensure_future(self.lifetime_loop(), loop=self.loop)
+        self.loop_task = asyncio.ensure_future(self.lifetime_loop(), loop=self.loop)
+
+    async def stop(self) -> None:
+        self.loop_task.cancel()
 
     async def lifetime_loop(self) -> None:
         try:
@@ -41,7 +45,6 @@ class HassWebhook(Plugin):
     async def schedule_nearby_lifetime_ends(self, now: datetime) -> None:
         until = now + timedelta(minutes=1)
         for lifetime_end in self.db.get_older_than(until):
-            self.log.info("ASD")
             asyncio.create_task(self.post_lifetime_end(lifetime_end))
 
     async def post_lifetime_end(self, lifetime_end: LifetimeEnd) -> None:

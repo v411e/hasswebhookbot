@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime, timedelta
 from enum import Enum
@@ -19,7 +20,8 @@ class RoomPosterType(Enum):
     REDACTION = 3
     REACTION = 4
 
-    def get_type_from_str(mtype: str) -> Enum:
+    @classmethod
+    def get_type_from_str(cls, mtype: str):
         type_switcher = {
             "": RoomPosterType.MESSAGE,
             "message": RoomPosterType.MESSAGE,
@@ -126,6 +128,7 @@ class RoomPoster:
 
     # Search in room history for a message containing the identifier and return the event of that message
     async def search_history_for_event(self) -> Optional[MaubotMessageEvent]:
+        self.hasswebhook.log.debug(f"Searching for message_event... {self.identifier}")
         sync_result = await self.hasswebhook.client.sync()
         prev_batch = sync_result.get("rooms").get("join").get(
             self.room_id).get("timeline").get("prev_batch")
@@ -176,5 +179,7 @@ class RoomPoster:
                     break
         if not message_event:
             self.hasswebhook.log.error("Could not find a matching event.")
-            return message_event
+            return
+
+        self.hasswebhook.log.debug(f"Found message_event: {message_event.event_id}")
         return message_event
