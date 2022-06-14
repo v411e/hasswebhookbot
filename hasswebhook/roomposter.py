@@ -9,7 +9,8 @@ from markdown import markdown
 from maubot import Plugin
 from maubot.matrix import MaubotMessageEvent
 from mautrix.errors.request import MForbidden
-from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, MessageEventContent
+from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, \
+    MessageEventContent, EventID
 
 from .db import LifetimeEnd
 
@@ -129,6 +130,15 @@ class RoomPoster:
 
     # Search in room history for a message containing the identifier and return the event of that message
     async def search_history_for_event(self) -> Optional[MaubotMessageEvent]:
+        if "event_id." in self.identifier:
+            event_id = EventID(self.identifier[9:])
+            message_event = await self.hasswebhook.client.get_event(room_id=self.room_id, event_id=event_id)
+            self.hasswebhook.log.info(
+                f"[search_history_for_event] event_id: {event_id}: message_event: {message_event}")
+            if not message_event:
+                self.hasswebhook.log.error("Could not find a matching event for event_id.")
+            return message_event
+
         self.hasswebhook.log.debug(f"Searching for message_event... {self.identifier}")
         sync_result = await self.hasswebhook.client.sync()
         prev_batch = sync_result.get("rooms").get("join").get(
@@ -164,20 +174,12 @@ class RoomPoster:
                 continue
 
         message_event: MaubotMessageEvent = None
-        if "event_id." in self.identifier:
-            event_id = self.identifier[9:]
-            for event in eventlist:
-                if event_id == event.event_id:
-                    message_event = MaubotMessageEvent(
-                        base=event, client=self.hasswebhook.client)
-                    break
-        else:
-            for event in eventlist:
-                evt_content: MessageEventContent = event.content
-                if self.identifier in evt_content.body:
-                    message_event = MaubotMessageEvent(
-                        base=event, client=self.hasswebhook.client)
-                    break
+        for event in eventlist:
+            evt_content: MessageEventContent = event.content
+            if self.identifier in evt_content.body:
+                message_event = MaubotMessageEvent(
+                    base=event, client=self.hasswebhook.client)
+                break
         if not message_event:
             self.hasswebhook.log.error("Could not find a matching event.")
             return
