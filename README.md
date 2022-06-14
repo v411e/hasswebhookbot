@@ -25,14 +25,14 @@ notify:
     resource: "<WEBHOOK_URL>"
     method: POST_JSON
     data:
-      type: "{{data.type}}"
-      identifier: "{{data.identifier}}"
-      callback_url: "{{data.callback_url}}"
-      lifetime: "{{data.lifetime}}"
+      type: "{% if data is mapping and 'type' in data %}{{data.type}}{% endif %}"
+      identifier: "{% if data is mapping and 'identifier' in data %}{{data.identifier}}{% endif %}"
+      callback_url: "{% if data is mapping and 'callback_url' in data %}{{data.callback_url}}{% endif %}"
+      lifetime: "{% if data is mapping and 'lifetime' in data %}{{data.lifetime}}{% endif %}"
 ```
 
 ## Usage
-The bot is stateless (no database) and can be used within multiple rooms.
+The bot is almost stateless (database only used for lifetime) and can be used within multiple rooms.
 ```yaml
 service: notify.<your_service_name>
 data:
@@ -110,3 +110,15 @@ data:
     type: edit
     identifier: event_id.$DRTYGw...     # event_id can be obtained through callback
 ```
+
+**Hint:** Depending on your preference, you can choose between two different modes for the edit feature:
+1. Content of `<del></del>` is discarded in the Matrix notification (`keep_del_tag: true`) <br> Notification example:
+```
+* - New message
+```
+2. Content of `<del></del>` is displayed as normal text (`keep_del_tag: false`) <br> Notification example: 
+```
+* Previous message - New message
+```
+
+You can change this setting on the maubot configuration page.

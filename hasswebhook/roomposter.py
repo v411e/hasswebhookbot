@@ -109,7 +109,8 @@ class RoomPoster:
 
     # Edit message
     async def post_edit(self) -> bool:
-        body = re.sub(r"<del>.*</del>", "", self.message)
+        body = re.sub(r"<del>(.*)</del>", r"\1", self.message) if self.hasswebhook.get_keep_del_tag() else re.sub(
+            r"<del>.*</del>", "", self.message)
         content = TextMessageEventContent(
             msgtype=MessageType.TEXT,
             format=Format.HTML,

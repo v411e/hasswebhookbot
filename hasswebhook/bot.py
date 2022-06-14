@@ -1,5 +1,4 @@
 import asyncio
-import time
 
 import pytz
 from maubot import Plugin, MessageEvent
@@ -65,6 +64,9 @@ class HassWebhook(Plugin):
     def get_command_prefix(self) -> str:
         return self.config["command_prefix"]
 
+    def get_keep_del_tag(self) -> str:
+        return self.config["keep_del_tag"]
+
     @command.new(name=get_command_prefix)
     async def setup_instructions(self, evt: MessageEvent) -> None:
         setup_instructions = HassWebhookSetupInstructions(
@@ -117,6 +119,10 @@ class HassWebhook(Plugin):
         else:
             self.log.debug("I responded with 404")
             return Response(status=404)
+
+    @web.get("/health")
+    async def health(self, req: Request) -> Response:
+        return Response(status=200)
 
     @classmethod
     def get_config_class(cls) -> Type[Config]:
