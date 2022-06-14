@@ -1,2 +1,3 @@
 command_prefix: ha
 base_url: https://maubot.example.com/
+keep_del_tag: false
