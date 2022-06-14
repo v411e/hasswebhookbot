@@ -6,3 +6,4 @@ class Config(BaseProxyConfig):
         helper.copy("command_prefix")
         helper.copy("base_url")
         helper.copy("keep_del_tag")
+        helper.copy("message_key")

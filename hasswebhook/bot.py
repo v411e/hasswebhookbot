@@ -67,6 +67,9 @@ class HassWebhook(Plugin):
     def get_keep_del_tag(self) -> str:
         return self.config["keep_del_tag"]
 
+    def get_message_key(self) -> str:
+        return self.config["message_key"]
+
     @command.new(name=get_command_prefix)
     async def setup_instructions(self, evt: MessageEvent) -> None:
         setup_instructions = HassWebhookSetupInstructions(
@@ -93,7 +96,7 @@ class HassWebhook(Plugin):
         self.log.info(await req.text())
         req_dict = await req.json()
         self.log.debug(req_dict)
-        message: str = req_dict.get("message")
+        message: str = req_dict.get(self.get_message_key())
         rp_type: RoomPosterType = RoomPosterType.get_type_from_str(req_dict.get("type", "message"))
         identifier: str = req_dict.get("identifier", "")
         callback_url: str = req_dict.get("callback_url", "")
