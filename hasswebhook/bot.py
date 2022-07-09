@@ -1,18 +1,19 @@
 import asyncio
+import json
+from datetime import datetime, timedelta
+from typing import Type
 
 import pytz
+from aiohttp.web import Request, Response
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, web
 from mautrix.types import TextMessageEventContent, Format, MessageType
 from mautrix.util import markdown
 
-from typing import Type
 from .config import Config
-from aiohttp.web import Request, Response
-from .roomposter import RoomPoster, RoomPosterType
-from .setupinstructions import HassWebhookSetupInstructions
 from .db import LifetimeDatabase, LifetimeEnd
-from datetime import datetime, timedelta
+from .roomposter import RoomPoster, RoomPosterType, Image
+from .setupinstructions import HassWebhookSetupInstructions
 
 
 class HassWebhook(Plugin):
@@ -90,6 +91,32 @@ class HassWebhook(Plugin):
 
         await evt.respond(content)
 
+    @web.post("/image/{room_id}")
+    async def post_image(self, req: Request) -> Response:
+        room_id: str = req.match_info["room_id"]
+        self.log.info(f"Image request for {room_id}")
+        req_dict = await req.json()
+        self.log.info(req_dict)
+        callback_url: str = req_dict.get("callback_url", "")
+        content: str = req_dict.get("content")
+        content_type: str = req_dict.get("contentType")
+        name: str = req_dict.get("name")
+
+        room_poster: RoomPoster = RoomPoster(
+            hasswebhook=self,
+            identifier="",
+            rp_type=RoomPosterType.IMAGE,
+            room_id=room_id,
+            callback_url=callback_url,
+            image=Image(content=content, content_type=content_type, name=name)
+        )
+
+        event_id = await room_poster.post_image()
+        if not event_id is None:
+            return Response(status=200, body=json.dumps({"event_id": event_id}), content_type="application/json")
+        else:
+            return Response(status=404)
+
     @web.post("/push/{room_id}")
     async def post_data(self, req: Request) -> Response:
         room_id: str = req.match_info["room_id"]
@@ -117,10 +144,14 @@ class HassWebhook(Plugin):
         )
 
         self.log.debug(f"Received data with ID {room_id}: {req_dict}")
-        if await room_poster.post_to_room():
+
+        event_id = await room_poster.post_to_room()
+
+        if rp_type == RoomPosterType.MESSAGE:
+            return Response(status=200, body=json.dumps({"event_id": event_id}), content_type="application/json")
+        elif event_id:
             return Response(status=200)
         else:
-            self.log.debug("I responded with 404")
             return Response(status=404)
 
     @web.get("/health")
