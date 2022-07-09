@@ -22,11 +22,13 @@ class Image:
     content: str
     content_type: str
     name: str
+    thumbnail_size: int
 
-    def __init__(self, content: str, content_type: str, name: str):
+    def __init__(self, content: str, content_type: str, name: str, thumbnail_size: int = 128):
         self.content = content
         self.content_type = content_type
         self.name = name
+        self.thumbnail_size = thumbnail_size
 
 
 class RoomPosterType(Enum):
@@ -43,7 +45,8 @@ class RoomPosterType(Enum):
             "message": RoomPosterType.MESSAGE,
             "redaction": RoomPosterType.REDACTION,
             "edit": RoomPosterType.EDIT,
-            "reaction": RoomPosterType.REACTION
+            "reaction": RoomPosterType.REACTION,
+            "image": RoomPosterType.IMAGE
         }
         return type_switcher.get(mtype)
 
@@ -84,7 +87,7 @@ class RoomPoster:
         if self.rp_type == RoomPosterType.REACTION:
             return await self.post_reaction()
         if self.rp_type == RoomPosterType.IMAGE:
-            return await self.post_reaction()
+            return await self.post_image()
         return False
 
     async def post_image(self) -> str:
@@ -101,7 +104,7 @@ class RoomPoster:
         media_event.info = image_info
 
         byt_arr_tn = BytesIO()
-        img.thumbnail((128, 128), pil_image.ANTIALIAS)
+        img.thumbnail((self.image.thumbnail_size, self.image.thumbnail_size), pil_image.ANTIALIAS)
         img.save(byt_arr_tn, format='PNG')
 
         tn_img = pil_image.open(byt_arr_tn)
