@@ -1,13 +1,13 @@
-from typing import Optional, Iterator, Dict, List
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Iterator
+
 import pytz
 from attr import dataclass
-from sqlalchemy import (Column, String, Integer, Text, DateTime, ForeignKey, Table, MetaData,
+from mautrix.types import EventID, RoomID
+from sqlalchemy import (Column, String, Integer, DateTime, Table, MetaData,
                         select, and_)
 from sqlalchemy.engine.base import Engine
-
-from mautrix.types import UserID, EventID, RoomID
 
 
 @dataclass
@@ -29,10 +29,10 @@ class LifetimeDatabase:
         meta.bind = db
 
         self.lifetime_ends = Table("lifetime_ends", meta,
-                              Column("id", Integer, primary_key=True, autoincrement=True),
-                              Column("end_date", DateTime, nullable=False),
-                              Column("room_id", String(255), nullable=False),
-                              Column("event_id", String(255), nullable=False))
+                                   Column("id", Integer, primary_key=True, autoincrement=True),
+                                   Column("end_date", DateTime, nullable=False),
+                                   Column("room_id", String(255), nullable=False),
+                                   Column("event_id", String(255), nullable=False))
 
         meta.create_all()
 
@@ -47,7 +47,7 @@ class LifetimeDatabase:
         rows = self.db.execute(select([self.lifetime_ends]).where(and_(*where)))
         for row in rows:
             yield LifetimeEnd(id=row[0], end_date=row[1].replace(tzinfo=pytz.UTC), room_id=row[2],
-                               event_id=row[3])
+                              event_id=row[3])
 
     def remove(self, lifetime_end: LifetimeEnd) -> None:
         self.db.execute(self.lifetime_ends.delete().where(
