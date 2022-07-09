@@ -115,7 +115,7 @@ class HassWebhook(Plugin):
         content: str = req_dict.get("content")
         content_type: str = req_dict.get("contentType")
         name: str = req_dict.get("name")
-        thumbnail_size: int = req_dict.get("thumbnailSize")
+        thumbnail_size: int = req_dict.get("thumbnailSize", 128)
         image = None
         self.log.info(content)
         if not content and rp_type == RoomPosterType.IMAGE:

@@ -24,7 +24,7 @@ class Image:
     name: str
     thumbnail_size: int
 
-    def __init__(self, content: str, content_type: str, name: str, thumbnail_size: int = 128):
+    def __init__(self, content: str, content_type: str, name: str, thumbnail_size: int):
         self.content = content
         self.content_type = content_type
         self.name = name
