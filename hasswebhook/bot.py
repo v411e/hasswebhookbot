@@ -1,18 +1,19 @@
 import asyncio
+import json
+from datetime import datetime, timedelta
+from typing import Type
 
 import pytz
+from aiohttp.web import Request, Response
 from maubot import Plugin, MessageEvent
 from maubot.handlers import command, web
 from mautrix.types import TextMessageEventContent, Format, MessageType
 from mautrix.util import markdown
 
-from typing import Type
 from .config import Config
-from aiohttp.web import Request, Response
-from .roomposter import RoomPoster, RoomPosterType
-from .setupinstructions import HassWebhookSetupInstructions
 from .db import LifetimeDatabase, LifetimeEnd
-from datetime import datetime, timedelta
+from .roomposter import RoomPoster, RoomPosterType, Image
+from .setupinstructions import HassWebhookSetupInstructions
 
 
 class HassWebhook(Plugin):
@@ -93,19 +94,42 @@ class HassWebhook(Plugin):
     @web.post("/push/{room_id}")
     async def post_data(self, req: Request) -> Response:
         room_id: str = req.match_info["room_id"]
-        self.log.info(await req.text())
+        self.log.info(f"Request for room {room_id} data: {await req.text()}")
+
         req_dict = await req.json()
         self.log.debug(req_dict)
+
         message: str = req_dict.get(self.get_message_key())
         rp_type: RoomPosterType = RoomPosterType.get_type_from_str(req_dict.get("type", "message"))
         identifier: str = req_dict.get("identifier", "")
         callback_url: str = req_dict.get("callback_url", "")
+
         lifetime: int = req_dict.get("lifetime", "")
         if lifetime == "" or int(lifetime) < 0:
             lifetime = -1
         else:
             lifetime = int(lifetime)
-        self.log.info(f"Lifetime 1: {lifetime}")
+        self.log.debug(f"Lifetime: {lifetime}")
+
+        # Image parameters
+        content: str = req_dict.get("content")
+        content_type: str = req_dict.get("contentType")
+        name: str = req_dict.get("name")
+        thumbnail_size: int = req_dict.get("thumbnailSize", 128)
+        image = None
+        self.log.info(content)
+        if not content and rp_type == RoomPosterType.IMAGE:
+            return Response(status=400, content_type="application/json", body=json.dumps(
+                {"success": False,
+                 "error": "Type is set to image. Please pass at least the 'content' property (base64 image)"}))
+
+        if content and rp_type != RoomPosterType.IMAGE:
+            rp_type = RoomPosterType.IMAGE
+
+        if rp_type == RoomPosterType.IMAGE:
+            image = Image(content=content, content_type=content_type, name=name, thumbnail_size=thumbnail_size)
+            self.log.info(f"Image content found: {content}")
+
         room_poster: RoomPoster = RoomPoster(
             hasswebhook=self,
             message=message,
@@ -113,14 +137,18 @@ class HassWebhook(Plugin):
             rp_type=rp_type,
             room_id=room_id,
             callback_url=callback_url,
-            lifetime=lifetime
+            lifetime=lifetime,
+            image=image,
         )
 
         self.log.debug(f"Received data with ID {room_id}: {req_dict}")
-        if await room_poster.post_to_room():
+
+        event_id = await room_poster.post_to_room()
+        if rp_type == RoomPosterType.MESSAGE or rp_type == RoomPosterType.IMAGE:
+            return Response(status=200, body=json.dumps({"event_id": event_id}), content_type="application/json")
+        elif event_id:
             return Response(status=200)
         else:
-            self.log.debug("I responded with 404")
             return Response(status=404)
 
     @web.get("/health")

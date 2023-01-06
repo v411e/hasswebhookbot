@@ -1,18 +1,34 @@
-import logging
 import re
+from base64 import b64decode
 from datetime import datetime, timedelta
 from enum import Enum
+from io import BytesIO
 from typing import Optional
 
 import pytz
+from PIL import Image as pil_image
 from markdown import markdown
 from maubot import Plugin
 from maubot.matrix import MaubotMessageEvent
+from mautrix.crypto.attachments import encrypt_attachment
 from mautrix.errors.request import MForbidden
 from mautrix.types import TextMessageEventContent, Format, MessageType, RoomID, PaginationDirection, \
-    MessageEventContent, EventID
+    MessageEventContent, EventID, MediaMessageEventContent, ImageInfo, EventType, ThumbnailInfo
 
 from .db import LifetimeEnd
+
+
+class Image:
+    content: str
+    content_type: str
+    name: str
+    thumbnail_size: int
+
+    def __init__(self, content: str, content_type: str, name: str, thumbnail_size: int):
+        self.content = content
+        self.content_type = content_type
+        self.name = name
+        self.thumbnail_size = thumbnail_size
 
 
 class RoomPosterType(Enum):
@@ -20,6 +36,7 @@ class RoomPosterType(Enum):
     EDIT = 2
     REDACTION = 3
     REACTION = 4
+    IMAGE = 5
 
     @classmethod
     def get_type_from_str(cls, mtype: str):
@@ -28,7 +45,8 @@ class RoomPosterType(Enum):
             "message": RoomPosterType.MESSAGE,
             "redaction": RoomPosterType.REDACTION,
             "edit": RoomPosterType.EDIT,
-            "reaction": RoomPosterType.REACTION
+            "reaction": RoomPosterType.REACTION,
+            "image": RoomPosterType.IMAGE
         }
         return type_switcher.get(mtype)
 
@@ -43,7 +61,7 @@ class RoomPoster:
     lifetime: int
 
     def __init__(self, hasswebhook: Plugin, identifier: str, rp_type: RoomPosterType, room_id: str,
-                 message="", callback_url="", lifetime=-1):
+                 image: Optional[Image] = None, message="", callback_url="", lifetime=-1):
         self.rp_type = rp_type
         self.room_id = RoomID(room_id)
         self.hasswebhook = hasswebhook
@@ -51,6 +69,7 @@ class RoomPoster:
         self.callback_url = callback_url
         self.message = message
         self.lifetime = lifetime
+        self.image = image
 
     # Send a POST as a callback containing the event_id of the sent message
     async def callback(self, event_id: str) -> None:
@@ -58,7 +77,7 @@ class RoomPoster:
             await self.hasswebhook.http.post(self.callback_url, json={'event_id': event_id})
 
     # Switch for each RoomPosterType
-    async def post_to_room(self) -> bool:
+    async def post_to_room(self):
         if self.rp_type == RoomPosterType.MESSAGE:
             return await self.post_message()
         if self.rp_type == RoomPosterType.REDACTION:
@@ -67,10 +86,44 @@ class RoomPoster:
             return await self.post_edit()
         if self.rp_type == RoomPosterType.REACTION:
             return await self.post_reaction()
+        if self.rp_type == RoomPosterType.IMAGE:
+            return await self.post_image()
         return False
 
+    async def post_image(self) -> str:
+        media_event = MediaMessageEventContent(body=self.image.name, msgtype=MessageType.IMAGE)
+
+        upload_mime = "application/octet-stream"
+        bytes_image = b64decode(self.image.content)
+        encrypted_image, file = encrypt_attachment(bytes_image)
+        file.url = await self.hasswebhook.client.upload_media(encrypted_image, mime_type=upload_mime)
+        media_event.file = file
+
+        img = pil_image.open(BytesIO(bytes_image))
+        image_info = ImageInfo(mimetype=self.image.content_type, height=img.height, width=img.width)
+        media_event.info = image_info
+
+        byt_arr_tn = BytesIO()
+        img.thumbnail((self.image.thumbnail_size, self.image.thumbnail_size), pil_image.ANTIALIAS)
+        img.save(byt_arr_tn, format='PNG')
+
+        tn_img = pil_image.open(byt_arr_tn)
+        enc_tn, tn_file = encrypt_attachment(byt_arr_tn.getvalue())
+
+        image_info.thumbnail_info = ThumbnailInfo(mimetype="image/png", height=tn_img.height, width=tn_img.width)
+        tn_file.url = await self.hasswebhook.client.upload_media(enc_tn, mime_type=upload_mime)
+        image_info.thumbnail_file = tn_file
+
+        img.close()
+        tn_img.close()
+
+        event_id = await self.hasswebhook.client.send_message_event(self.room_id, event_type=EventType.ROOM_MESSAGE,
+                                                                    content=media_event)
+        await self.callback(event_id)
+        return event_id
+
     # Send message to room
-    async def post_message(self) -> bool:
+    async def post_message(self):
         body = "{message} by {identifier}".format(
             message=self.message, identifier=self.identifier) if self.identifier else self.message
         content = TextMessageEventContent(
@@ -87,10 +140,10 @@ class RoomPoster:
                 end_time = datetime.now(tz=pytz.UTC) + timedelta(minutes=self.lifetime)
                 self.hasswebhook.db.insert(
                     LifetimeEnd(end_date=end_time, room_id=self.room_id, event_id=event_id_req))
+            return event_id_req
         except MForbidden:
             self.hasswebhook.log.error("Wrong Room ID")
             return False
-        return True
 
     # Redact message
     async def post_redaction(self) -> bool:
