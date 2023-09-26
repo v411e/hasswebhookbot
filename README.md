@@ -60,6 +60,14 @@ data:
     callback_url: https://ha.example.com/api/webhook/some_hook_id
     lifetime: 1440
 ```
+### Send a message (but minimal)
+```yaml
+service: notify.hass_maubot
+data:
+  message: "hi"
+  data:
+    type: "message"
+```
 ### Delete a message
 ```yaml
 service: notify.hass_maubot
