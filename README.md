@@ -1,11 +1,10 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/v411e/hasswebhookbot)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/v411e/hasswebhookbot/CI?label=maubot%20package%20build)
 
 # Homeassistant notification bot for [matrix](https://matrix.org/) via webhooks
 A [maubot](https://github.com/maubot) bot to get [Homeassistant](https://github.com/home-assistant)-notifications in your favorite matrix room.
-Simple message                         |  Edited message with reaction
-:-------------------------------------:|:-------------------------:
-![Imgur](https://i.imgur.com/y22FQKe.jpg)|  ![Imgur](https://i.imgur.com/rPUdca3.jpeg)
+Simple message                         |  Edited message with reaction | Image
+:-------------------------------------:|:-------------------------:|:----:
+![Imgur](https://i.imgur.com/y22FQKe.jpg)|  ![Imgur](https://i.imgur.com/rPUdca3.jpeg) | ![Imgur](https://imgur.com/CdFZPf9.png)
 
 
 
