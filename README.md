@@ -36,6 +36,7 @@ notify:
 
 ## Usage
 The bot is almost stateless (database only used for lifetime) and can be used within multiple rooms.
+Most attributes are optional. The only attribute that always has to be provided through home assistant is `data: message`. You can set this to `None` if you are not using it (e.g. sending a redaction or image)
 ```yaml
 service: notify.<your_service_name>
 data:
@@ -127,7 +128,7 @@ data:
 ```
 The image sending functionality is contributed and used by https://github.com/AlexanderBabel/mail-parser.
 
-## Config
+## Maubot plugin config
 **Hint:** Depending on your preference, you can choose between two different modes for the edit feature:
 1. Content of `<del></del>` is discarded in the Matrix notification (`keep_del_tag: true`) <br> Notification example:
 ```
