@@ -6,7 +6,7 @@ Simple message                         |  Edited message with reaction | Image
 :-------------------------------------:|:-------------------------:|:----:
 ![Imgur](https://i.imgur.com/y22FQKe.jpg)|  ![Imgur](https://i.imgur.com/rPUdca3.jpeg) | ![Imgur](https://imgur.com/CdFZPf9.png)
 
-
+I am describing in this [blog post](https://riess.dev/washing-machine-notifications/) how I use this bot to get notified whenever my washing machine has finised.
 
 ## Configuration
 First add this plugin to your maubot manager:
