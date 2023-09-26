@@ -125,7 +125,9 @@ data:
     contentType: "image/png"
     name: "halogo.png"
 ```
+The image sending functionality is contributed and used by https://github.com/AlexanderBabel/mail-parser.
 
+## Config
 **Hint:** Depending on your preference, you can choose between two different modes for the edit feature:
 1. Content of `<del></del>` is discarded in the Matrix notification (`keep_del_tag: true`) <br> Notification example:
 ```
